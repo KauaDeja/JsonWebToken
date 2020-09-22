@@ -253,3 +253,119 @@
     ## Links de apoio
 
     [https://jwt.io/](https://jwt.io/)
+    
+    # 14 - Criptografia
+    
+    Capacidades:
+     9. Desenvolver API (web services) para integração de dados entre plataformas
+     10. Desenvolver sistemas web de acordo com as regras de negócio estabelecidas
+Tipo: Formativa
+
+Na aula de hoje vamos aprender como criptografar nossas senhas para salvar no banco de dados e consultar pela API, pelo hash SHA256
+
+## ATIVIDADE
+
+Na atividade de hoje faça o mesmo exemplo dado em aula, criptografando as senhas dos usuários com SHA256
+
+![https://s3-us-west-2.amazonaws.com/secure.notion-static.com/685fc980-6c9a-4880-ade6-4da63b30e1b6/Criptografia_Fluxo.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/685fc980-6c9a-4880-ade6-4da63b30e1b6/Criptografia_Fluxo.png)
+
+## PRÓLOGO
+
+Criptografia de Júlio Cesar:
+
+[Cifra de César](https://pt.wikipedia.org/wiki/Cifra_de_C%C3%A9sar)
+
+## ETAPAS
+
+- Criar Classe De Criptografia
+- Salvar senha no banco criptografando
+- Autenticar usuário criptografando
+
+- [ ]  Criar Classes de criptografia;
+    - [ ]  Criar pasta Utils
+    - [ ]  Criar classe Crypto.cs , deixando-a como **static**
+
+    ```csharp
+    public static class Crypto
+    {
+    	public static string Criptografar(string Txt, string Salt)
+    	{
+    	    using(SHA256 sha256Hash = SHA256.Create())
+    	    {
+    	        // ComputeHash - retorna uma array de bytes  
+    	        byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(Salt+Txt));
+    	
+    	        // Converterter array de bytes para string  
+    	        StringBuilder builder = new StringBuilder();
+    	        for (int i = 0; i < bytes.Length; i++)
+    	        {
+    	            builder.Append(bytes[i].ToString("x2"));
+    	        }
+    	        return builder.ToString();
+    	    }
+    	}
+    }
+    ```
+
+- [ ]  Ajustar Controller de Usuário para salvar senha criptografada
+    - [ ]  Criar o UsuarioController pelo EFCore
+    - [ ]  Alterar a instância do Contexto
+
+        ```csharp
+        private NyousContext _context = new NyousContext();
+        ```
+
+    - [ ]  Chamar a lib
+
+        ```csharp
+        using NyousManha.Utils;
+        ```
+
+    - [ ]  Dentro do endpoint de POST, antes de adicionar no banco, criptografamos nossa senha:
+
+        ```csharp
+        // Criptografamos antes de salvar a senha
+        usuario.Senha = Crypto.Criptografar(usuario.Senha, usuario.Email.Substring(0,4));
+        ```
+
+    - [ ]  Confira no endpoint se está funcionando, o resultado deve ser uma senha neste padrão:
+
+        ```csharp
+        {
+            "idUsuario": 3,
+            "nome": "Paulo Brandao Crypto",
+            "email": "paulo@senai.com.br",
+            "senha": "a6328d5e800d7230a104896b987993f3801b4861725ad6a4d42421fd6884ba6a",
+            "dataNascimento": "1970-04-02T00:00:00",
+            "idAcesso": 1,
+            "idAcessoNavigation": null,
+            "conviteIdUsuarioConvidadoNavigation": [],
+            "conviteIdUsuarioEmissorNavigation": [],
+            "presenca": []
+        }
+        ```
+
+- [ ]  Ajustar LoginController para verificar o acesso com a senha convertida
+    - [ ]  Chamar a lib
+
+        ```csharp
+        using JWT.Utils;
+        ```
+
+    - [ ]  No método AuthenticateUser, antes da validação com o banco:
+
+        ```csharp
+        // Criptografamos antes de consultar com o banco
+        login.Senha = Crypto.Criptografar(login.Senha, usuario.Email.Substring(0,4));
+        ```
+
+    - [ ]  No Postman, passamos login e senha normalmente:
+
+        ```csharp
+        {
+            "email": "paulo@senai.com.br",
+            "senha": "paulo123paulo"
+        }
+        ```
+
+    **DONE**! 😎 👏👏👏
